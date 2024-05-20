@@ -2,7 +2,7 @@
     import "../app.css";
     import {isCirclesWallet} from "../stores/isCirclesWallet";
     import {connectedWallet} from "../stores/connectedWallet";
-    import {CirclesData, Rpc} from "@circles-sdk/data";
+    import {CirclesData, CirclesRpc} from "@circles-sdk/data";
     import {Settings} from "$lib/settings";
 
     let balance: string | null = null;
@@ -11,7 +11,7 @@
         if (!$connectedWallet) {
             throw new Error("No connected wallet");
         }
-        const circlesData = new CirclesData(new Rpc(Settings.chainConfigs.chiado.circlesRpcUrl));
+        const circlesData = new CirclesData(new CirclesRpc(Settings.chainConfigs.chiado.circlesRpcUrl));
         balance = parseFloat(await circlesData.getTotalBalance($connectedWallet.address)).toFixed(2);
     }
 

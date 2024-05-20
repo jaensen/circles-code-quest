@@ -8,7 +8,6 @@ A demo app for the Circles code quest using @cirlces-sdk.
 npm install
 ```
 
-
 ## Run the app
 
 ```bash
