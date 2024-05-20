@@ -1,5 +1,14 @@
 # Circles code quest
 
+A demo app for the Circles code quest using @cirlces-sdk.
+
+## Install dependencies
+    
+```bash
+npm install
+```
+
+
 ## Run the app
 
 ```bash
