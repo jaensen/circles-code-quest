@@ -10,6 +10,7 @@
     import type {TransactionHistoryRow} from "@circles-sdk/data/dist/rows/transactionHistoryRow";
     import {ethers} from "ethers";
     import {crcToTc} from "@circles-sdk/utils";
+    import {Sdk, V1Token} from "@circles-sdk/sdk";
 
     onMount(() => {
         redirectToHome(!$isCirclesWallet);
@@ -44,6 +45,16 @@
         } else {
             return parseFloat(ethers.formatEther(txRow.value)).toFixed(2);
         }
+    }
+
+    async function handleMintCircles() {
+        if (!$connectedWallet?.signer) {
+            throw new Error("No connected wallet");
+        }
+        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+        const token = new V1Token($connectedWallet.signer, await sdk.v1Hub.userToToken($connectedWallet.address));
+        const tx = await token.update();
+        console.log(tx);
     }
 
     function transactionTemplate(transaction: TransactionHistoryRow) {
@@ -98,5 +109,10 @@
 </script>
 
 <PageFrame title="Recent transactions">
+    <div class="flex justify-between items-center mb-4">
+        <button class="bg-blue-500 text-white py-2 px-4 rounded-md" on:click={handleMintCircles}>
+            Mint Circles
+        </button>
+    </div>
     <List {items} template={transactionTemplate}/>
 </PageFrame>
