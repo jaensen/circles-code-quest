@@ -2,6 +2,24 @@
     import "../app.css";
     import {isCirclesWallet} from "../stores/isCirclesWallet";
     import {connectedWallet} from "../stores/connectedWallet";
+    import {CirclesData, Rpc} from "@circles-sdk/data";
+    import {Settings} from "$lib/settings";
+
+    let balance: string | null = null;
+
+    async function getBalance() {
+        if (!$connectedWallet) {
+            throw new Error("No connected wallet");
+        }
+        const circlesData = new CirclesData(new Rpc(Settings.chainConfigs.chiado.circlesRpcUrl));
+        balance = parseFloat(await circlesData.getTotalBalance($connectedWallet.address)).toFixed(2);
+    }
+
+    $: {
+        if ($isCirclesWallet) {
+            getBalance();
+        }
+    }
 </script>
 
 <!-- Header -->
@@ -11,8 +29,8 @@
         <img src="https://via.placeholder.com/50" alt="User Icon" class="w-12 h-12 rounded-full">
         <div class="ml-4">
             <h1 class="text-xl font-semibold">{$connectedWallet.address}</h1>
-            {#if $isCirclesWallet}
-                <p class="text-sm">Balance: $1234.56</p>
+            {#if $isCirclesWallet && balance}
+                <p class="text-sm">Balance: {balance} Circles</p>
             {:else}
                 <p class="text-sm">&nbsp;</p>
             {/if}
