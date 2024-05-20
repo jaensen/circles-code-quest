@@ -9,6 +9,7 @@
     import {connectedWallet} from "../../stores/connectedWallet";
     import type {TransactionHistoryRow} from "@circles-sdk/data/dist/rows/transactionHistoryRow";
     import {ethers} from "ethers";
+    import {crcToTc} from "@circles-sdk/utils";
 
     onMount(() => {
         redirectToHome(!$isCirclesWallet);
@@ -36,11 +37,19 @@
         }
     }
 
+    function formatAsTimeCircles(txRow: TransactionHistoryRow) {
+        if (txRow.version === 1) {
+            const timestamp = new Date(txRow.timestamp * 1000);
+            return crcToTc(timestamp, parseFloat(ethers.formatEther(txRow.value))).toFixed(2)
+        } else {
+            return parseFloat(ethers.formatEther(txRow.value)).toFixed(2);
+        }
+    }
+
     function transactionTemplate(transaction: TransactionHistoryRow) {
         console.log(`transaction.timestamp: ${transaction.timestamp}`);
-        const dateString = new Date(transaction.timestamp * 1000).toLocaleDateString();
-        const timeString = new Date(transaction.timestamp * 1000).toLocaleTimeString();
-        const dateTime = `${dateString} - ${timeString}`;
+        const timestamp = new Date(transaction.timestamp * 1000);
+        const dateTime = `${timestamp.toLocaleDateString()} - ${timestamp.toLocaleTimeString()}`;
         if (transaction.from == $connectedWallet?.address) {
             // This wallet is the sender
             return `
@@ -52,7 +61,7 @@
                     <p class="text-xs text-gray-500">${dateTime}</p>
                 </div>
                 <div class="ml-auto">
-                    <p class="text-lg">- ${transaction.value}</p>
+                    <p class="text-lg">- ${formatAsTimeCircles(transaction)}</p>
                 </div>
         `;
         } else {
@@ -68,7 +77,7 @@
                         <p class="text-xs text-gray-500">${dateTime}</p>
                     </div>
                     <div class="ml-auto">
-                        <p class="text-lg">+ ${transaction.value}</p>
+                    <p class="text-lg">+ ${formatAsTimeCircles(transaction)}</p>
                     </div>
                 `;
             } else {
@@ -81,7 +90,7 @@
                         <p class="text-xs text-gray-500">${dateTime}</p>
                     </div>
                     <div class="ml-auto">
-                        <p class="text-lg">+ ${transaction.value}</p>
+                        <p class="text-lg">+ ${formatAsTimeCircles(transaction)}</p>
                     </div>
                 `;
             }
