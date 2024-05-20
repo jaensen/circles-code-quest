@@ -6,6 +6,7 @@
     import {onMount} from "svelte";
     import {isWalletConnected} from "../../stores/isWalletConnected";
     import {redirectToHome} from "../../utils/redirectToHome";
+    import {disconnectWallet} from "../../utils/disconnectWallet";
 
     let isWaiting = false;
 
@@ -19,12 +20,11 @@
         setTimeout(() => {
             isWaiting = false;
             // Account creation logic here
-            isCirclesWalletCache["0x123"] = "SignedUp";
-            const addr = $connectedWallet?.address;
-            $connectedWallet = {
-                address: addr
+            if ($connectedWallet?.address) {
+                isCirclesWalletCache[$connectedWallet?.address] = "SignedUp";
+                $connectedWallet = $connectedWallet;
+                goto("/dashboard");
             }
-            goto("/dashboard");
         }, 3000);
     }
 </script>
@@ -39,8 +39,7 @@
                     Create Account
                 </button>
                 <button class="bg-gray-500 text-white py-2 px-6 rounded-md" on:click={() => {
-                    $connectedWallet = undefined;
-                    goto("/connect-wallet");
+                    disconnectWallet();
                  }}>
                     Connect different wallet
                 </button>
@@ -53,8 +52,7 @@
                     Continue
                 </button>
                 <button class="bg-gray-500 text-white py-2 px-6 rounded-md" on:click={() => {
-                    $connectedWallet = undefined;
-                    goto("/connect-wallet");
+                    disconnectWallet();
                  }}>
                     Connect different wallet
                 </button>

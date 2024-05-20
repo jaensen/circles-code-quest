@@ -1,10 +1,9 @@
 <script lang="ts">
     import PageFrame from "../../components/PageFrame.svelte";
-    import {connectedWallet} from "../../stores/connectedWallet";
-    import {goto} from "$app/navigation";
     import {onMount} from "svelte";
     import {isWalletConnected} from "../../stores/isWalletConnected";
     import {redirectToHome} from "../../utils/redirectToHome";
+    import {disconnectWallet} from "../../utils/disconnectWallet";
 
     onMount(() => {
         redirectToHome(!$isWalletConnected);
@@ -35,8 +34,7 @@
             <div class="mt-3 space-y-2">
                 <div>
                     <button class="bg-red-500 text-white py-2 px-6 rounded-md" on:click={() => {
-                        $connectedWallet = undefined;
-                        goto("/connect-wallet");
+                        disconnectWallet();
                      }}>
                         Connect different wallet
                     </button>
