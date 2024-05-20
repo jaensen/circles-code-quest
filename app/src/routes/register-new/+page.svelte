@@ -7,6 +7,8 @@
     import {isWalletConnected} from "../../stores/isWalletConnected";
     import {redirectToHome} from "../../utils/redirectToHome";
     import {disconnectWallet} from "../../utils/disconnectWallet";
+    import {Sdk} from "@circles-sdk/sdk";
+    import {Settings} from "$lib/settings";
 
     let isWaiting = false;
 
@@ -14,18 +16,24 @@
         redirectToHome(!$isWalletConnected);
     });
 
-    function createAccount() {
+    async function createAccount() {
         isWaiting = true;
-        // Simulate account creation process
-        setTimeout(() => {
-            isWaiting = false;
-            // Account creation logic here
-            if ($connectedWallet?.address) {
-                isCirclesWalletCache[$connectedWallet?.address] = "SignedUp";
-                $connectedWallet = $connectedWallet;
-                goto("/dashboard");
-            }
-        }, 3000);
+
+        if (!$connectedWallet?.signer) {
+            throw new Error('Signer not found');
+        }
+
+        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+        const txReceipt = await sdk.v1Hub.signup();
+        console.log(txReceipt);
+
+        isWaiting = false;
+        // Account creation logic here
+        if ($connectedWallet?.address) {
+            isCirclesWalletCache[$connectedWallet?.address] = "SignedUp";
+            $connectedWallet = $connectedWallet;
+            goto("/dashboard");
+        }
     }
 </script>
 

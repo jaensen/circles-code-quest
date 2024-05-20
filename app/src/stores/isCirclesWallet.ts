@@ -11,7 +11,7 @@ export type SignupStatus = "NotSignedUp" | "SignedUp";
 export const isCirclesWalletCache: { [address: string]: SignupStatus } = {};
 
 async function checkSignupStatus(address: string): Promise<SignupStatus> {
-    const circlesData = new CirclesData(new Rpc(Settings.circlesRpcUrl));
+    const circlesData = new CirclesData(new Rpc(Settings.chainConfigs.chiado.circlesRpcUrl));
     const isSignedUp = await circlesData.isSignedUp(address);
     if (isSignedUp) {
         return "SignedUp";
