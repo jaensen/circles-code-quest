@@ -47,7 +47,6 @@
     }
 
     function transactionTemplate(transaction: TransactionHistoryRow) {
-        console.log(`transaction.timestamp: ${transaction.timestamp}`);
         const timestamp = new Date(transaction.timestamp * 1000);
         const dateTime = `${timestamp.toLocaleDateString()} - ${timestamp.toLocaleTimeString()}`;
         if (transaction.from == $connectedWallet?.address) {
