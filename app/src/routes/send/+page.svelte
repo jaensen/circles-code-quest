@@ -7,25 +7,66 @@
     import {Sdk} from "@circles-sdk/sdk";
     import {Settings} from "$lib/settings";
     import {connectedWallet} from "../../stores/connectedWallet";
+    import {ethers, TransactionReceipt} from "ethers";
 
     onMount(() => {
         redirectToHome(!$isCirclesWallet);
     });
 
     let recipient: string = "";
+    let valueString: string = "";
     let isWaiting = false;
+    let recipientIsValid = false;
+    let maxAmountString: string = "-"; // Todo: add current balance as initial state
+    let maxAmount: bigint = BigInt(0);
 
-    const send = async () => {
-        isWaiting = true;
+    $: {
+        recipientIsValid = ethers.isAddress(recipient);
+        if (recipientIsValid) {
+            maxAmountString = "loading ...";
+            determineMaxFlow().then((maxFlow) => {
+                maxAmount = maxFlow;
+                maxAmountString = ethers.formatEther(maxFlow);
+            });
+        }
+    }
 
+    const determineMaxFlow = async () => {
         if (!$connectedWallet?.signer) {
             throw new Error('Signer not found');
         }
 
         const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
-
-        // Send logic here
+        const avatar = await sdk.getAvatar($connectedWallet.address);
+        const maxFlow = await avatar.getMaxTransferableAmount(recipient);
+        console.log("maxFlow", maxFlow.toString());
+        return maxFlow;
     };
+
+    const send = async (): Promise<TransactionReceipt> => {
+        isWaiting = true;
+        try {
+            if (!$connectedWallet?.signer) {
+                throw new Error('Signer not found');
+            }
+            if (!recipientIsValid) {
+                throw new Error('Recipient is not a valid address');
+            }
+
+            const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+            const avatar = await sdk.getAvatar($connectedWallet.address);
+            const receipt = await avatar.transfer(recipient, ethers.parseEther(valueString.toString()));
+
+            console.log(receipt);
+            return receipt;
+        } finally {
+            isWaiting = false;
+        }
+    };
+
+    function setMax() {
+        valueString = ethers.formatEther(maxAmount.toString());
+    }
 </script>
 
 <!-- Main Section -->
@@ -51,14 +92,16 @@
         <!-- Amount -->
         <div>
             <label for="amount" class="block text-sm font-medium text-gray-700">Amount</label>
-            <input type="number" id="amount" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+            <input bind:value={valueString} type="number" id="amount"
+                   class="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                    placeholder="0.00">
         </div>
 
         <!-- Max Amount and Set Max Button -->
         <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-500">Max Amount: <span id="max-amount">$1234.56</span></p>
-            <button id="set-max" class="bg-blue-500 text-white px-3 py-2 rounded-md">Set Max</button>
+            <p class="text-sm text-gray-500">Max Amount: <span id="max-amount">{maxAmountString}</span></p>
+            <button id="set-max" class="bg-blue-500 text-white px-3 py-2 rounded-md" on:click={() => setMax()}>Set Max
+            </button>
         </div>
 
         <!-- Send Button -->
