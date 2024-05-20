@@ -3,12 +3,10 @@
     import List from '../../components/List.svelte';
     import {onMount} from "svelte";
     import {redirectToHome} from "../../utils/redirectToHome";
-    import {connectedWallet} from "../../stores/connectedWallet";
     import {goto} from "$app/navigation";
     import type {TrustRelationRow} from "@circles-sdk/sdk/dist/AvatarInterface";
-    import {Sdk} from "@circles-sdk/sdk";
-    import {Settings} from "$lib/settings";
     import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
+    import ContactListItem from "./ContactListItem.svelte";
 
     onMount(() => {
         redirectToHome(!$connectedCirclesAvatar);
@@ -23,27 +21,30 @@
         }
     }
 
-    function contactTemplate(contact: TrustRelationRow) {
-        const timestamp = new Date(contact.timestamp * 1000);
-        const dateTime = `${timestamp.toLocaleDateString()} - ${timestamp.toLocaleTimeString()}`;
-
-        const inSvg = `<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 4.5-15 15m0 0h11.25m-11.25 0V8.25" />`;
-        const outSvg = `<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />`;
-        const mutualSvg = `<path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />`;
-
-        return `
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 rounded-full">
-              ${contact.relation === 'trusts' ? outSvg : contact.relation === 'trustedBy' ? inSvg : mutualSvg}
-            </svg>
-            <div class="ml-4">
-                <p class="text-sm font-medium">${contact.objectAvatar}</p>
-                <p class="text-xs text-gray-500">Added: ${dateTime}</p>
-            </div>
-            `;
-    }
-
     function handleAddContact(): void {
         goto('/add-contact');
+    }
+
+    function onItemClick(e: CustomEvent) {
+    }
+
+    async function onContextAction(e: CustomEvent<{ item: TrustRelationRow, action: string }>) {
+        if (!$connectedCirclesAvatar) {
+            throw new Error("Not connected with a valid circles wallet");
+        }
+
+        const {item, action} = e.detail;
+        if (action === 'delete') {
+            await $connectedCirclesAvatar?.untrust(item.objectAvatar);
+        }
+
+        if (action === 'add') {
+            await $connectedCirclesAvatar?.trust(item.objectAvatar);
+        }
+
+        if (action === 'send') {
+            goto(`/send/${item.objectAvatar}`);
+        }
     }
 </script>
 
@@ -53,5 +54,9 @@
             Add Contact
         </button>
     </div>
-    <List {items} template={contactTemplate}/>
+    <List items={items}
+          listItemComponent={ContactListItem}
+          on:itemClick={(e) => onItemClick(e)}
+          on:contextAction={(e) => onContextAction(e)}
+    />
 </PageFrame>

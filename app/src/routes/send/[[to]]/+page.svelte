@@ -1,16 +1,18 @@
 <script lang="ts">
-    import PageFrame from "../../components/PageFrame.svelte";
+    import PageFrame from "../../../components/PageFrame.svelte";
     import {onMount} from "svelte";
-    import {redirectToHome} from "../../utils/redirectToHome";
-    import Waiting from "../../components/Waiting.svelte";
+    import {redirectToHome} from "../../../utils/redirectToHome";
+    import Waiting from "../../../components/Waiting.svelte";
     import {ethers, TransactionReceipt} from "ethers";
-    import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
+    import {connectedCirclesAvatar} from "../../../stores/connectedCirclesAvatar";
+    import {page} from "$app/stores";
 
     onMount(() => {
         redirectToHome(!$connectedCirclesAvatar);
     });
 
-    let recipient: string = "";
+
+    let recipient: string = $page.params.to ?? "";
     let valueString: string = "";
     let isWaiting = false;
     let recipientIsValid = false;
@@ -30,7 +32,7 @@
 
     const determineMaxFlow = async () => {
         if (!$connectedCirclesAvatar) {
-            throw new Error('Signer not found');
+            return BigInt(0);
         }
 
         return await $connectedCirclesAvatar.getMaxTransferableAmount(recipient);
