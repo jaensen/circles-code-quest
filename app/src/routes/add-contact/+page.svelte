@@ -2,23 +2,23 @@
     import PageFrame from "../../components/PageFrame.svelte";
     import {onMount} from "svelte";
     import {redirectToHome} from "../../utils/redirectToHome";
-    import {isCirclesWallet} from "../../stores/isCirclesWallet";
     import {Sdk} from "@circles-sdk/sdk";
     import {Settings} from "$lib/settings";
     import {connectedWallet} from "../../stores/connectedWallet";
+    import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
 
     onMount(() => {
-        redirectToHome(!$isCirclesWallet);
+        redirectToHome(!$connectedCirclesAvatar);
     });
 
     let trustAddress = "";
 
     async function trust() {
-        if (!$connectedWallet?.signer) {
-            throw new Error("No signer found");
+        if (!$connectedCirclesAvatar) {
+            throw new Error("Not a valid circles wallet");
         }
-        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
-        const txReceipt = await sdk.v1Hub.trust(trustAddress, BigInt(100));
+
+        const txReceipt = await $connectedCirclesAvatar.trust(trustAddress);
         console.log(txReceipt);
     }
 </script>

@@ -1,16 +1,13 @@
 <script lang="ts">
     import PageFrame from "../../components/PageFrame.svelte";
     import {onMount} from "svelte";
-    import {isCirclesWallet} from "../../stores/isCirclesWallet";
     import {redirectToHome} from "../../utils/redirectToHome";
     import Waiting from "../../components/Waiting.svelte";
-    import {Sdk} from "@circles-sdk/sdk";
-    import {Settings} from "$lib/settings";
-    import {connectedWallet} from "../../stores/connectedWallet";
     import {ethers, TransactionReceipt} from "ethers";
+    import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
 
     onMount(() => {
-        redirectToHome(!$isCirclesWallet);
+        redirectToHome(!$connectedCirclesAvatar);
     });
 
     let recipient: string = "";
@@ -32,30 +29,24 @@
     }
 
     const determineMaxFlow = async () => {
-        if (!$connectedWallet?.signer) {
+        if (!$connectedCirclesAvatar) {
             throw new Error('Signer not found');
         }
 
-        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
-        const avatar = await sdk.getAvatar($connectedWallet.address);
-        const maxFlow = await avatar.getMaxTransferableAmount(recipient);
-        console.log("maxFlow", maxFlow.toString());
-        return maxFlow;
+        return await $connectedCirclesAvatar.getMaxTransferableAmount(recipient);
     };
 
     const send = async (): Promise<TransactionReceipt> => {
         isWaiting = true;
         try {
-            if (!$connectedWallet?.signer) {
-                throw new Error('Signer not found');
+            if (!$connectedCirclesAvatar) {
+                throw new Error('Not a Circles avatar');
             }
             if (!recipientIsValid) {
                 throw new Error('Recipient is not a valid address');
             }
 
-            const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
-            const avatar = await sdk.getAvatar($connectedWallet.address);
-            const receipt = await avatar.transfer(recipient, ethers.parseEther(valueString.toString()));
+            const receipt = await $connectedCirclesAvatar.transfer(recipient, ethers.parseEther(valueString.toString()));
 
             console.log(receipt);
             return receipt;

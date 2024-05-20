@@ -1,9 +1,9 @@
 <script lang="ts">
     import "../app.css";
-    import {isCirclesWallet} from "../stores/isCirclesWallet";
     import {connectedWallet} from "../stores/connectedWallet";
     import {CirclesData, CirclesRpc} from "@circles-sdk/data";
     import {Settings} from "$lib/settings";
+    import {connectedCirclesAvatar} from "../stores/connectedCirclesAvatar";
 
     let balance: string | null = null;
 
@@ -16,7 +16,7 @@
     }
 
     $: {
-        if ($isCirclesWallet) {
+        if ($connectedCirclesAvatar) {
             getBalance();
         }
     }
@@ -29,7 +29,7 @@
         <img src="https://via.placeholder.com/50" alt="User Icon" class="w-12 h-12 rounded-full">
         <div class="ml-4">
             <h1 class="text-xl font-semibold">{$connectedWallet.address}</h1>
-            {#if $isCirclesWallet && balance}
+            {#if $connectedCirclesAvatar && balance}
                 <p class="text-sm">Balance: {balance} Circles</p>
             {:else}
                 <p class="text-sm">&nbsp;</p>
@@ -46,7 +46,7 @@
 <slot></slot>
 
 <!-- Quick Access Bar -->
-{#if $isCirclesWallet}
+{#if $connectedCirclesAvatar}
     <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-lg">
         <div class="flex justify-around p-3">
             <a href="/dashboard" class="btn bg-blue-500 text-white p-3 rounded-full">

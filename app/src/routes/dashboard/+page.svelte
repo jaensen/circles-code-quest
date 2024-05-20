@@ -2,7 +2,6 @@
     import PageFrame from "../../components/PageFrame.svelte";
     import List from '../../components/List.svelte';
     import {onMount} from "svelte";
-    import {isCirclesWallet} from "../../stores/isCirclesWallet";
     import {redirectToHome} from "../../utils/redirectToHome";
     import {CirclesData, CirclesQuery, CirclesRpc} from "@circles-sdk/data";
     import {Settings} from "$lib/settings";
@@ -10,17 +9,17 @@
     import type {TransactionHistoryRow} from "@circles-sdk/data/dist/rows/transactionHistoryRow";
     import {ethers} from "ethers";
     import {crcToTc} from "@circles-sdk/utils";
-    import {Sdk, V1Token} from "@circles-sdk/sdk";
+    import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
 
     onMount(() => {
-        redirectToHome(!$isCirclesWallet);
+        redirectToHome(!$connectedCirclesAvatar);
     });
 
     let items: TransactionHistoryRow[] = [];
     let query: CirclesQuery<TransactionHistoryRow> | null = null;
 
     $: {
-        if (!$connectedWallet || !$isCirclesWallet) {
+        if (!$connectedWallet || !$connectedCirclesAvatar) {
             items = [];
             query = null;
         } else {
@@ -51,9 +50,8 @@
         if (!$connectedWallet?.signer) {
             throw new Error("No connected wallet");
         }
-        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
-        const token = new V1Token($connectedWallet.signer, await sdk.v1Hub.userToToken($connectedWallet.address));
-        const tx = await token.update();
+
+        const tx = $connectedCirclesAvatar?.personalMint();
         console.log(tx);
     }
 
