@@ -1,6 +1,6 @@
 import {derived} from "svelte/store";
 import {connectedWallet} from "./connectedWallet";
-import {CirclesData, Rpc} from "@circles-sdk/data";
+import {CirclesData, CirclesRpc} from "@circles-sdk/data";
 import {Settings} from "$lib/settings";
 
 export type SignupStatus = "NotSignedUp" | "SignedUp";
@@ -11,9 +11,9 @@ export type SignupStatus = "NotSignedUp" | "SignedUp";
 export const isCirclesWalletCache: { [address: string]: SignupStatus } = {};
 
 async function checkSignupStatus(address: string): Promise<SignupStatus> {
-    const circlesData = new CirclesData(new Rpc(Settings.chainConfigs.chiado.circlesRpcUrl));
-    const isSignedUp = await circlesData.isSignedUp(address);
-    if (isSignedUp) {
+    const circlesData = new CirclesData(new CirclesRpc(Settings.chainConfigs.chiado.circlesRpcUrl));
+    const avatarInfo = await circlesData.getAvatarInfo(address);
+    if (avatarInfo) {
         return "SignedUp";
     }
     return "NotSignedUp";

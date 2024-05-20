@@ -9,6 +9,7 @@
     import {disconnectWallet} from "../../utils/disconnectWallet";
     import {Sdk} from "@circles-sdk/sdk";
     import {Settings} from "$lib/settings";
+    import Waiting from "../../components/Waiting.svelte";
 
     let isWaiting = false;
 
@@ -38,8 +39,8 @@
 </script>
 
 <PageFrame title="">
-    <div class="flex flex-col items-center justify-center h-full p-6 space-y-4">
-        {#if !isWaiting}
+    {#if !isWaiting}
+        <div class="flex flex-col items-center justify-center h-full p-6 space-y-4">
             {#if !$isCirclesWallet}
                 <h1 class="text-2xl font-bold mb-4">Register a New Account</h1>
                 <p class="text-gray-700 mb-6 text-center">Click the button below to create a new account.</p>
@@ -65,13 +66,10 @@
                     Connect different wallet
                 </button>
             {/if}
-        {/if}
-        {#if isWaiting}
-            <h1 class="text-2xl font-bold mb-4">Creating Account...</h1>
-            <p class="text-gray-700 mb-6 text-center">Please wait while we set up your new account.</p>
-            <div class="loader border-t-4 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
-        {/if}
-    </div>
+        </div>
+    {:else}
+        <Waiting title="Creating Account..." description="Please wait while we set up your new account."/>
+    {/if}
 
     <style>
         .loader {

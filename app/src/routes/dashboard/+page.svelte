@@ -4,7 +4,7 @@
     import {onMount} from "svelte";
     import {isCirclesWallet} from "../../stores/isCirclesWallet";
     import {redirectToHome} from "../../utils/redirectToHome";
-    import {CirclesData, CirclesQuery, Rpc} from "@circles-sdk/data";
+    import {CirclesData, CirclesQuery, CirclesRpc} from "@circles-sdk/data";
     import {Settings} from "$lib/settings";
     import {connectedWallet} from "../../stores/connectedWallet";
     import type {TransactionHistoryRow} from "@circles-sdk/data/dist/rows/transactionHistoryRow";
@@ -24,7 +24,7 @@
             items = [];
             query = null;
         } else {
-            const circlesData = new CirclesData(new Rpc(Settings.chainConfigs.chiado.circlesRpcUrl));
+            const circlesData = new CirclesData(new CirclesRpc(Settings.chainConfigs.chiado.circlesRpcUrl));
             query = circlesData.getTransactionHistory($connectedWallet.address, 25);
         }
 
