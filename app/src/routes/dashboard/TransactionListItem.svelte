@@ -23,7 +23,6 @@
     $: isMinting = item.from === ethers.ZeroAddress && item.to === $connectedCirclesAvatar?.address.toLowerCase();
     $: sign = isOutgoing ? '-' : '+';
     $: contactAddress = isOutgoing ? item.to : item.from;
-
 </script>
 
 {#if isMinting}

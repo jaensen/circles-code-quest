@@ -7,25 +7,37 @@
     import type {TrustRelationRow} from "@circles-sdk/sdk/dist/AvatarInterface";
     import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
     import ContactListItem from "./ContactListItem.svelte";
+    import ActionButton from "../../components/ActionButton.svelte";
 
     onMount(() => {
-        redirectToHome(!$connectedCirclesAvatar);
+        if (redirectToHome(!$connectedCirclesAvatar)) {
+            return;
+        }
+
+        initializeQuery();
+
+        return $connectedCirclesAvatar?.events.subscribe(async value => {
+            if (value.name === "Trust") {
+                console.log("Trust event received:", value.data);
+                await initializeQuery()
+            }
+        });
     });
 
     let items: TrustRelationRow[] = [];
-    $: {
-        if ($connectedCirclesAvatar) {
-            $connectedCirclesAvatar.getTrustRelations().then(trustRelations => {
-                items = trustRelations;
-            });
+
+    async function initializeQuery() {
+        if (!$connectedCirclesAvatar) {
+            return;
         }
+
+        const newItems = await $connectedCirclesAvatar.getTrustRelations();
+        items = [];
+        setTimeout(() => items = newItems, 0);
     }
 
-    function handleAddContact(): void {
-        goto('/add-contact');
-    }
-
-    function onItemClick(e: CustomEvent) {
+    async function handleAddContact() {
+        await goto('/contacts/add');
     }
 
     async function onContextAction(e: CustomEvent<{ item: TrustRelationRow, action: string }>) {
@@ -50,13 +62,12 @@
 
 <PageFrame title="Contacts">
     <div class="flex justify-between items-center mb-4">
-        <button class="bg-blue-500 text-white py-2 px-4 rounded-md" on:click={handleAddContact}>
+        <ActionButton action={handleAddContact} disabled={!$connectedCirclesAvatar} doneStateDuration={5000}>
             Add Contact
-        </button>
+        </ActionButton>
     </div>
     <List items={items}
           listItemComponent={ContactListItem}
-          on:itemClick={(e) => onItemClick(e)}
           on:contextAction={(e) => onContextAction(e)}
     />
 </PageFrame>

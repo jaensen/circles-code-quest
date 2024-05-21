@@ -3,38 +3,42 @@
     import List from '../../components/List.svelte';
     import {onMount} from "svelte";
     import {redirectToHome} from "../../utils/redirectToHome";
-    import {CirclesData, CirclesQuery, CirclesRpc} from "@circles-sdk/data";
-    import {Settings} from "$lib/settings";
+    import {CirclesQuery} from "@circles-sdk/data";
     import {connectedWallet} from "../../stores/connectedWallet";
     import type {TransactionHistoryRow} from "@circles-sdk/data/dist/rows/transactionHistoryRow";
-    import {ethers} from "ethers";
     import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
     import TransactionListItem from "./TransactionListItem.svelte";
+    import ActionButton from "../../components/ActionButton.svelte";
 
     onMount(() => {
-        redirectToHome(!$connectedCirclesAvatar);
+        if (redirectToHome(!$connectedCirclesAvatar)) {
+            return;
+        }
+
+        initializeQuery();
+
+        return $connectedCirclesAvatar?.events.subscribe(async value => {
+            if (value.name === "HubTransfer") {
+                console.log("HubTransfer event received:", value.data);
+                await initializeQuery()
+            } else if (value.name === "Transfer") {
+                console.log("Transfer event received", value.data);
+                await initializeQuery();
+            }
+        });
     });
 
     let items: TransactionHistoryRow[] = [];
     let query: CirclesQuery<TransactionHistoryRow> | null = null;
 
-    $: {
-        if (!$connectedWallet || !$connectedCirclesAvatar) {
-            items = [];
-            query = null;
-        } else {
-            const circlesData = new CirclesData(new CirclesRpc(Settings.chainConfigs.chiado.circlesRpcUrl));
-            query = circlesData.getTransactionHistory($connectedWallet.address, 25);
+    async function initializeQuery() {
+        if (!$connectedCirclesAvatar) {
+            return;
         }
 
-        if (query && items.length === 0) {
-            query.queryNextPage().then(() => {
-                if (!query?.currentPage?.results) {
-                    return;
-                }
-                items = query.currentPage.results;
-            });
-        }
+        query = await $connectedCirclesAvatar.getTransactionHistory(25);
+        items = [];
+        setTimeout(() => items = query?.currentPage?.results ?? [], 0);
     }
 
     async function handleMintCircles() {
@@ -42,16 +46,15 @@
             throw new Error("No connected wallet");
         }
 
-        const tx = $connectedCirclesAvatar?.personalMint();
-        console.log(tx);
+        return $connectedCirclesAvatar?.personalMint();
     }
 </script>
 
 <PageFrame title="Recent transactions">
     <div class="flex justify-between items-center mb-4">
-        <button class="bg-blue-500 text-white py-2 px-4 rounded-md" on:click={handleMintCircles}>
+        <ActionButton action={handleMintCircles} disabled={!$connectedCirclesAvatar} doneStateDuration={5000}>
             Mint Circles
-        </button>
+        </ActionButton>
     </div>
     <List {items} listItemComponent={TransactionListItem}/>
 </PageFrame>

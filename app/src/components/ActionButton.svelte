@@ -1,92 +1,90 @@
 <script lang="ts" context="module">
-    export enum ExecutionState {
-        None = 'none',
-        Initializing = 'initializing',
-        Processing = 'processing',
-        Success = 'success',
-        Error = 'error',
-    }
+    export type ActionButtonState = 'Ready' | 'Working' | 'Error' | 'Retry' | 'Done' | 'Disabled';
 
-    export type ActionStatus = { state: ExecutionState, status: string };
+    export interface ActionButtonTheme {
+        ['Ready']: string;
+        ['Working']: string;
+        ['Error']: string;
+        ['Retry']: string;
+        ['Done']: string;
+        ['Disabled']: string;
+    }
 </script>
 <script lang="ts">
-    import type {Readable} from "svelte/store";
-    import {readable} from "svelte/store";
+    import {createEventDispatcher} from "svelte";
 
-    export let title: string;
-    export let description: string;
-    export let actionButtonText: string;
-    export let actionFactory: () =>
-        | Readable<ActionStatus>
-        | Promise<Readable<ActionStatus>>;
-    export let allowRetry = false;
-    export let initialMessage = "";
-    export let onDone: (actionStatus: ActionStatus) => void;
+    export let action: () => Promise<any>;
+    export let doneStateDuration: number = 2000;
+    export let errorTransitory: boolean = true;
+    export let disabled: boolean = false;
 
-    let actionStatus: Readable<ActionStatus> = readable({
-        state: ExecutionState.None,
-        status: initialMessage,
-    });
-
-    const isProcessing = (state: ExecutionState) => {
-        return (
-            state !== ExecutionState.None &&
-            state !== ExecutionState.Success &&
-            state !== ExecutionState.Error
-        );
+    export let theme: ActionButtonTheme = {
+        ['Ready']: 'bg-blue-500 text-white',
+        ['Working']: 'bg-gray-200 text-black',
+        ['Error']: 'bg-yellow-500 text-white',
+        ['Retry']: 'bg-yellow-500 text-white',
+        ['Done']: 'bg-green-500 text-white',
+        ['Disabled']: 'bg-gray-400 text-white',
     };
 
-    async function onButtonClicked() {
-        const store = actionFactory();
-        if (store instanceof Promise) {
-            actionStatus = await store;
-        } else {
-            actionStatus = store;
+    const eventDispatcher = createEventDispatcher();
+
+    let state: ActionButtonState = 'Ready';
+    let errorMessage: string = '';
+
+    const executeAction = () => {
+        if (disabled || state === 'Done' || state == 'Working') {
+            return;
         }
-        let unsubscribe = actionStatus.subscribe((status) => {
-            if (
-                status.state === ExecutionState.Success ||
-                status.state === ExecutionState.Error
-            ) {
-                unsubscribe();
-            }
-            if (status.state === ExecutionState.Success && onDone) {
-                onDone(status);
-            }
-        });
+        state = 'Working';
+        action()
+            .then((result) => {
+                result = result;
+                state = 'Done';
+                eventDispatcher('done', {result});
+                setTimeout(() => {
+                    // Transition from Done to either Ready or Disabled
+                    state = disabled ? 'Disabled' : 'Ready';
+                }, doneStateDuration);
+            })
+            .catch((err) => {
+                errorMessage = err.message;
+                state = errorTransitory ? 'Error' : 'Retry';
+                eventDispatcher('error', {err});
+                if (errorTransitory) {
+                    setTimeout(() => {
+                        state = 'Retry';
+                    }, doneStateDuration); // Use the same duration for simplicity
+                }
+                console.error(err);
+            });
+    };
+
+    $: if (disabled && state !== 'Done') {
+        state = 'Disabled';
+    } else if (!disabled && state === 'Disabled') {
+        state = 'Ready';
     }
 </script>
 
-<h1 class="mb-5 text-5xl font-bold text-primary">{title}</h1>
-{#if $actionStatus.state === ExecutionState.None}
-    <p class="mb-5 text-primary">{description}</p>
-    <div class="items-center form-control">
-        <button
-                on:click={onButtonClicked}
-                class="bg-black rounded-full w-80 btn btn-primary text-primary"
-        >{actionButtonText}</button
-        >
-    </div>
-{:else if isProcessing($actionStatus.state)}
-    {#if $actionStatus.status && $actionStatus.status.trim() !== ""}
-        <div class="mb-4">
-            <div class="loader">
-                <div class="loaderBar"/>
-            </div>
-            <p class="text-info">
-                {$actionStatus.status}
-            </p>
+<button on:click={executeAction}
+        title="{errorMessage}"
+        class="ml-2 p-2 px-4 rounded-md {theme[state]} focus:outline-none transition">
+    {#if state === 'Working'}
+        <div class="loading-spinner inline-block border-t-2 border-b-2 border-gray-900 rounded-full w-4 h-4 animate-spin"></div>
+    {/if}
+    {#if state === 'Retry'}
+        <div class="inline-block">
+            ⟳
+        </div>
+    {:else if state === "Error"}
+        <div class="inline-block">
+            ⚠
+        </div>
+    {:else if state === "Done"}
+        <div class="inline-block">
+            ✓
         </div>
     {/if}
-{:else if $actionStatus.state === ExecutionState.Success}
-    <p class="text-success text-primary">Action completed successfully.</p>
-{:else if $actionStatus.state === ExecutionState.Error && allowRetry}
-    <div class="items-center form-control">
-        <p class="text-error mb-5">{$actionStatus.status}</p>
-        <button
-                on:click={onButtonClicked}
-                class="bg-black btn btn-primary text-primary rounded-full w-80"
-        >Retry: {actionButtonText}</button
-        >
-    </div>
-{/if}
+    <slot/>
+</button>
