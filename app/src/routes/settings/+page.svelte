@@ -4,6 +4,7 @@
     import {isWalletConnected} from "../../stores/isWalletConnected";
     import {redirectToHome} from "../../utils/redirectToHome";
     import {disconnectWallet} from "../../utils/disconnectWallet";
+    import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
 
     onMount(() => {
         redirectToHome(!$isWalletConnected);
@@ -18,12 +19,16 @@
                 <div>
                     <label for="circlesAddress" class="block text-sm font-medium text-gray-700">Circles address</label>
                     <input type="text" id="circlesAddress"
+                           readonly
+                           value={$connectedCirclesAvatar?.address}
                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                            placeholder="0x.....">
                 </div>
                 <div>
                     <label for="tokenAddress" class="block text-sm font-medium text-gray-700">Token address</label>
                     <input type="text" id="tokenAddress" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                           readonly
+                           value={$connectedCirclesAvatar?.avatarInfo?.tokenId}
                            placeholder="0x.....">
                 </div>
             </div>
