@@ -1,12 +1,13 @@
 <script lang="ts">
     import PageFrame from "../../../components/PageFrame.svelte";
-    import { onMount } from "svelte";
-    import { redirectToHome } from "../../../utils/redirectToHome";
-    import { ethers } from "ethers";
-    import { connectedCirclesAvatar } from "../../../stores/connectedCirclesAvatar";
-    import { page } from "$app/stores";
+    import {onMount} from "svelte";
+    import {redirectToHome} from "../../../utils/redirectToHome";
+    import {ethers} from "ethers";
+    import {connectedCirclesAvatar} from "../../../stores/connectedCirclesAvatar";
+    import {page} from "$app/stores";
     import ActionButton from "../../../components/ActionButton.svelte";
-    import { goto } from "$app/navigation";
+    import {goto} from "$app/navigation";
+    import {crcToTc} from "@circles-sdk/utils";
 
     onMount(() => {
         redirectToHome(!$connectedCirclesAvatar);
@@ -14,28 +15,11 @@
 
     let recipient: string = $page.params.to ?? "";
     let valueString: string = "";
-    let recipientIsValid = false;
-    let maxAmountString: string = "-"; // Todo: add current balance as initial state
-    let maxAmount: bigint = BigInt(0);
 
-    $: {
-        recipientIsValid = ethers.isAddress(recipient);
-        if (recipientIsValid) {
-            maxAmountString = "loading ...";
-            determineMaxFlow().then((maxFlow) => {
-                maxAmount = maxFlow;
-                maxAmountString = ethers.formatEther(maxFlow);
-            });
-        }
-    }
-
-    const determineMaxFlow = async () => {
-        if (!$connectedCirclesAvatar) {
-            return BigInt(0);
-        }
-
-        return await $connectedCirclesAvatar.getMaxTransferableAmount(recipient);
-    };
+    $: recipientIsValid = ethers.isAddress(recipient);
+    $: maxTransferableAmount = recipientIsValid
+        ? $connectedCirclesAvatar?.getMaxTransferableAmount(recipient)
+        : Promise.resolve(BigInt(0));
 
     const send = async () => {
         if (!$connectedCirclesAvatar) {
@@ -51,7 +35,7 @@
     };
 
     function setMax() {
-        valueString = ethers.formatEther(maxAmount.toString());
+        valueString = ethers.formatEther(maxTransferableAmount?.toString() ?? "0");
     }
 </script>
 
@@ -65,7 +49,8 @@
             <input bind:value={recipient}
                    type="text" id="recipient" class="mt-1 block w-full p-2 border border-gray-300 rounded-l-md"
                    placeholder="0x123...">
-            <button id="search-recipient" class="bg-blue-500 text-white p-2 rounded-r-md flex items-center justify-center">
+            <button id="search-recipient"
+                    class="bg-blue-500 text-white p-2 rounded-r-md flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -82,7 +67,8 @@
             <input bind:value={valueString} type="number" id="amount"
                    class="mt-1 block w-full p-2 border border-gray-300 rounded-l-md"
                    placeholder="0.00">
-            <button id="set-max" class="bg-blue-500 text-white p-2 rounded-r-md flex items-center justify-center" on:click={() => setMax()}>
+            <button id="set-max" class="bg-blue-500 text-white p-2 rounded-r-md flex items-center justify-center"
+                    on:click={() => setMax()}>
                 Set Max
             </button>
         </div>
@@ -90,7 +76,13 @@
 
     <!-- Max Amount Display -->
     <div class="flex items-center justify-between mt-2">
-        <p class="text-sm text-gray-500">Max Amount: <span id="max-amount">{maxAmountString}</span></p>
+        <p class="text-sm text-gray-500">Max Amount: <span id="max-amount">
+            {#await maxTransferableAmount}
+                <span>Loading ...</span>
+            {:then maxAmount}
+                {crcToTc(new Date(), maxAmount ?? BigInt(0))}
+            {/await}
+        </span></p>
     </div>
 
     <!-- Send Button -->
