@@ -1,39 +1,24 @@
 <script lang="ts">
     import "../app.css";
     import {connectedWallet} from "../stores/connectedWallet";
-    import {CirclesData, CirclesRpc} from "@circles-sdk/data";
-    import {Settings} from "$lib/settings";
     import {connectedCirclesAvatar} from "../stores/connectedCirclesAvatar";
 
-    let balance: string | null = null;
-
-    async function getBalance() {
-        if (!$connectedWallet) {
-            throw new Error("No connected wallet");
-        }
-        const circlesData = new CirclesData(new CirclesRpc(Settings.chainConfigs.chiado.circlesRpcUrl));
-        balance = parseFloat(await circlesData.getTotalBalance($connectedWallet.address)).toFixed(2);
-    }
-
-    $: {
-        if ($connectedCirclesAvatar) {
-            getBalance();
-        }
-    }
+    $: balance = $connectedCirclesAvatar?.getTotalBalance();
 </script>
 
 <!-- Header -->
 <header class="bg-blue-500 text-white p-4 flex items-center">
-
     {#if $connectedWallet}
         <img src="https://via.placeholder.com/50" alt="User Icon" class="w-12 h-12 rounded-full">
         <div class="ml-4">
             <h1 class="text-xl font-semibold">{$connectedWallet.address}</h1>
-            {#if $connectedCirclesAvatar && balance}
-                <p class="text-sm">Balance: {balance} Circles</p>
-            {:else}
-                <p class="text-sm">&nbsp;</p>
-            {/if}
+            {#await balance}
+                <p class="text-sm">0 Circles</p>
+            {:then balance}
+                <p class="text-sm">{balance?.toFixed(2) ?? "0"} Circles</p>
+            {:catch error}
+                <p class="text-sm">Error loading balance</p>
+            {/await}
         </div>
     {:else}
         <img src="https://via.placeholder.com/50" alt="User Icon" class="w-12 h-12 rounded-full">
