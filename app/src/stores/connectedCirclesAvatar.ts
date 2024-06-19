@@ -16,7 +16,7 @@ export const connectedCirclesAvatar: Readable<AvatarInterface | undefined> = der
         return;
     }
 
-    const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+    const sdk = new Sdk(Settings.chainConfigs.gnosis, $connectedWallet.signer);
     sdk.getAvatar($connectedWallet.address)
         .then(avatar => set(avatar))
         .catch(reason => {
