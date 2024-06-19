@@ -39,25 +39,6 @@
     async function handleAddContact() {
         await goto('/contacts/add');
     }
-
-    async function onContextAction(e: CustomEvent<{ item: TrustRelationRow, action: string }>) {
-        if (!$connectedCirclesAvatar) {
-            throw new Error("Not connected with a valid circles wallet");
-        }
-
-        const {item, action} = e.detail;
-        if (action === 'delete') {
-            await $connectedCirclesAvatar?.untrust(item.objectAvatar);
-        }
-
-        if (action === 'add') {
-            await $connectedCirclesAvatar?.trust(item.objectAvatar);
-        }
-
-        if (action === 'send') {
-            goto(`/send/${item.objectAvatar}`);
-        }
-    }
 </script>
 
 <PageFrame title="Contacts">
@@ -68,6 +49,5 @@
     </div>
     <List items={items}
           listItemComponent={ContactListItem}
-          on:contextAction={(e) => onContextAction(e)}
     />
 </PageFrame>
