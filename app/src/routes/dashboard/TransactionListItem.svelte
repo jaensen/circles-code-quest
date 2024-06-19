@@ -1,6 +1,5 @@
 <script lang="ts">
     import type {TransactionHistoryRow} from "@circles-sdk/data";
-    import {crcToTc} from "@circles-sdk/utils";
     import {ethers} from "ethers";
     import {connectedCirclesAvatar} from "../../stores/connectedCirclesAvatar";
 
@@ -8,15 +7,6 @@
 
     const timestamp = new Date(item.timestamp * 1000);
     const dateTime = `${timestamp.toLocaleDateString()} - ${timestamp.toLocaleTimeString()}`;
-
-    function formatAsTimeCircles(txRow: TransactionHistoryRow) {
-        if (txRow.version === 1) {
-            const timestamp = new Date(txRow.timestamp * 1000);
-            return crcToTc(timestamp, parseFloat(ethers.formatEther(txRow.value))).toFixed(2)
-        } else {
-            return parseFloat(ethers.formatEther(txRow.value)).toFixed(2);
-        }
-    }
 
     $: isIncoming = item.to === $connectedCirclesAvatar?.address.toLowerCase();
     $: isOutgoing = item.from === $connectedCirclesAvatar?.address.toLowerCase();
@@ -48,5 +38,5 @@
     <p class="text-xs text-gray-500">${dateTime}</p>
 </div>
 <div class="ml-auto">
-    <p class="text-lg">{sign} {formatAsTimeCircles(item)}</p>
+    <p class="text-lg">{sign} {item.timeCircles}</p>
 </div>
