@@ -24,7 +24,7 @@
         }
 
         const signerAddress = await $connectedWallet.signer.getAddress();
-        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+        const sdk = new Sdk(Settings.chainConfigs.gnosis, $connectedWallet.signer);
         const avatarInfo = await sdk.data.getAvatarInfo(signerAddress);
 
         // If the wallet is already a registered Circles wallet, go to the dashboard.

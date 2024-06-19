@@ -20,7 +20,7 @@
             throw new Error('Signer not found');
         }
 
-        const sdk = new Sdk(Settings.chainConfigs.chiado, $connectedWallet.signer);
+        const sdk = new Sdk(Settings.chainConfigs.gnosis, $connectedWallet.signer);
         const avatar = await sdk.registerHuman();
         setConnectedCirclesAvatar(avatar);
 
